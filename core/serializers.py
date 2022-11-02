@@ -6,14 +6,19 @@ from django.conf import settings
 from . import models
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from user_manager.serializers import UsersSerializer
 import logging
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
 
-class GeneralJsonSerializer(serializers.Serializer):
-    data = serializers.JSONField()
+class ProductSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    quantity = serializers.CharField()
+    reorder_min = serializers.CharField()
+    
+    
 
 
 class SystemUsersSerializer(serializers.Serializer):
@@ -26,14 +31,25 @@ class SystemUsersSerializer(serializers.Serializer):
 
 class GenericNameSerializer(serializers.Serializer):
     name = serializers.CharField()
+
+class GenericIdSerializer(serializers.Serializer):
+    request_id = serializers.CharField()
     
 class RoleSerializer(serializers.Serializer):
     role = serializers.CharField()
     
-class DropSerializer(serializers.Serializer):
-    creator_id = serializers.CharField()
-    status = serializers.CharField()
-    reason = serializers.CharField()
+class GetProductsSerializer(serializers.ModelSerializer):
+    added_by = UsersSerializer()
+    class Meta:
+        model = models.Product
+        fields = '__all__'
+        
+class GetReorderSerializer(serializers.ModelSerializer):
+    cleared_by = UsersSerializer()
+    product = GetProductsSerializer()
+    class Meta:
+        model = models.Reorder
+        fields = '__all__'
     
 
 # class InnovationDetailsSerializer(serializers.ModelSerializer):
