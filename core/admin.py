@@ -6,4 +6,4 @@ from . import models
 
 
 # Register your models here.
-# admin.site.register(models.Assigned, SearchUser)
+admin.site.register(models.Reorder)
