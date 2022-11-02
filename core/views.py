@@ -155,7 +155,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 productIns.status = "INSTOCK"
                 productIns.save() 
 
-                reorder = models.Reorder.objects.filter(Q(product=productIns)).first()
+                reorder = models.Reorder.objects.filter(Q(product=product_id)).first()
                 reorder.status = 'DISPATCHED'
                 reorder.save()
             
