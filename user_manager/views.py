@@ -97,7 +97,7 @@ class AuthenticationViewSet(viewsets.ModelViewSet):
             if is_suspended is True or is_suspended is None:
                 return Response({"details": "Your Account Has Been Suspended,Contact Admin"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                completed_profile = models.CompletedProfile.objects.filter(user=is_authenticated).exists()
+
                 payload = {
                     'id': str(is_authenticated.id),
                     'email': is_authenticated.email,

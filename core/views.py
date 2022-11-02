@@ -78,18 +78,28 @@ class StoreViewSet(viewsets.ModelViewSet):
             return Response({"details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
     
-    @action(methods=["GET"], detail=False, url_path="fetch-product", url_name="fetch-product")
+    @action(methods=["GET"], detail=False, url_path="fetch-products", url_name="fetch-products")
     def fetch_products(self, request):
-        status = request.query_params.get('status')
-        if not status:
-            status = 'INSTOCK'
+        item_status = request.query_params.get('status')
+        if not item_status:
+            item_status = 'INSTOCK'
         try:
-            products = models.Product.objects.filter(Q(status=status))
+            if item_status == 'INSTOCK':
+                products = models.Product.objects.filter(Q(quantity__gt=0))
+            elif item_status == 'DISPATCHED':
+                item_list = []
+                products = models.Reorder.objects.filter(Q(status=item_status))
+                for product in products:
+                    item_list.append(product.id)
+                products = models.Product.objects.filter(Q(id__in=item_list))
+            else:
+                products = models.Product.objects.filter(Q(status=item_status))
             products = serializers.GetProductsSerializer(products, many=True)            
             return Response(products.data, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(e)
             return Response({'details':'Error fetching product'},status=status.HTTP_400_BAD_REQUEST)
+
         
     @action(methods=["POST"], detail=False, url_path="buy-product",url_name="buy-product")
     def buy_product(self, request):
@@ -126,15 +136,44 @@ class StoreViewSet(viewsets.ModelViewSet):
                 return Response('success', status=status.HTTP_200_OK)
         else:
             return Response({"details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    
+    @action(methods=["POST"], detail=False, url_path="dispatch",url_name="dispatch")
+    def product_dispatch(self, request):
+        authenticated_user = request.user
+        payload = request.data
+        # print(payload)
+        serializer = serializers.DispatchSerializer(data=payload, many=False)
+        if serializer.is_valid():
+            with transaction.atomic():
+                product_id = payload['product_id']
+                quantity = payload['quantity']
+
+                
+                productIns = models.Product.objects.get(id=product_id)
+                productIns.quantity = productIns.quantity + int(quantity)
+                productIns.status = "INSTOCK"
+                productIns.save() 
+
+                reorder = models.Reorder.objects.filter(Q(product=productIns)).first()
+                reorder.status = 'DISPATCHED'
+                reorder.save()
+            
+
+                user_util.log_account_activity(
+                    authenticated_user, authenticated_user, "Item reorder dipatched", "Item reorder dipatched")
+                return Response('success', status=status.HTTP_200_OK)
+        else:
+            return Response({"details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
         
     @action(methods=["GET"], detail=False, url_path="fetch-reorder", url_name="fetch-reorder")
     def fetch_reorders(self, request):
-        status = request.query_params.get('status')
-        if not status:
-            status = 'PENDING'
+        item_status = request.query_params.get('status')
+        if not item_status:
+            item_status = 'PENDING'
         try:
-            products = models.Reorder.objects.filter(Q(status=status))
+            products = models.Reorder.objects.filter(Q(status=item_status))
             products = serializers.GetProductsSerializer(products, many=True)            
             return Response(products.data, status=status.HTTP_200_OK)
         except Exception as e:

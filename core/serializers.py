@@ -34,6 +34,10 @@ class GenericNameSerializer(serializers.Serializer):
 
 class GenericIdSerializer(serializers.Serializer):
     request_id = serializers.CharField()
+
+class DispatchSerializer(serializers.Serializer):
+    product_id = serializers.CharField()
+    quantity = serializers.CharField()
     
 class RoleSerializer(serializers.Serializer):
     role = serializers.CharField()
