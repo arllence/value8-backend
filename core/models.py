@@ -41,4 +41,4 @@ class Reorder(models.Model):
         db_table = "reordered"
 
     def __str__(self):
-        return str(self.name)
+        return str(self.product.name)
