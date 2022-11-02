@@ -90,7 +90,7 @@ class StoreViewSet(viewsets.ModelViewSet):
                 item_list = []
                 products = models.Reorder.objects.filter(Q(status=item_status))
                 for product in products:
-                    item_list.append(product.id)
+                    item_list.append(product.product.id)
                 products = models.Product.objects.filter(Q(id__in=item_list))
             else:
                 products = models.Product.objects.filter(Q(status=item_status))
